@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tw-brie-deployment
+  namespace: tw-brie
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tw-brie
+  template:
+    metadata:
+      labels:
+        app: tw-brie
+    spec:
+      containers:
+      - name: tw-brie-container
+        image: eessah/mtp-dev:3167
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+      imagePullSecrets:
+      - name: tw-brie-dockerhub-secret
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tw-brie-hpa
+  namespace: tw-brie
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tw-brie-deployment
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 90
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 90

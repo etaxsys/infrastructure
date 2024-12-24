@@ -1,0 +1,70 @@
+# AWS Inventory Script
+
+Automates the discovery of AWS services and resources, highlights cost drivers, and identifies opportunities for optimization. Ideally, this script will help us more efficiently manage our AWS infrastructure while ensuring security, scalability, and cost-effectiveness.
+
+## Overview
+
+`aws_inventory.py` is a Python-based script for generating a detailed inventory of AWS resources and billed services. The script provides two primary discovery mechanisms:
+
+1. **Cost-Driven Discovery**: Lists services that incurred costs over the past 7 days using the AWS Cost Explorer API.
+2. **Service Discovery**: Actively queries AWS APIs to list resources such as EC2 instances, S3 buckets, IAM users, and more.
+
+## Features
+
+- **Cost-Driven Reporting**: Highlights services that incurred costs, including their corresponding charges.
+- **Detailed Resource Counts**: Provides counts for resources like EC2 instances (by state), EBS volumes, Elastic IPs, S3 buckets, and more.
+- **Debugging Support**: Includes a debug mode for troubleshooting.
+
+## Prerequisites
+
+- **Python**: Version 3.6 or later.
+- **AWS SDK for Python (Boto3)**: Installed via pip.
+- **AWS Credentials**: Configured in the environment, via `~/.aws/credentials`, or IAM role for EC2 instances.
+- **AWS Cost Explorer**: Enabled in the AWS Management Console.
+
+## Installation
+
+1. Clone the repository or download the script.
+2. Install the required Python packages:
+    
+    bash
+    
+    Copy code
+    
+    `pip install boto3`
+    
+
+## Usage
+
+### Command-Line Options
+
+|Option|Description|
+|---|---|
+|`--debug`|Enables debug output for troubleshooting.|
+
+### Example Commands
+
+1. **Run the script with default settings**:
+    
+    bash
+    
+    Copy code
+    
+    `python aws_inventory.py`
+    
+2. **Run the script with debugging enabled**:
+    
+    bash
+    
+    Copy code
+    
+    `python aws_inventory.py --debug`
+    
+
+## Limitations
+
+1. **Cost Explorer**: Requires Cost Explorer to be enabled in the AWS account.
+2. **Region Scope**: Queries only `us-*` regions.
+3. **Permissions**: Requires IAM permissions for the queried services (e.g., `ec2:DescribeInstances`, `s3:ListBuckets`).
+
+

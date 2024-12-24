@@ -1,0 +1,261 @@
+
+
+First error-free run of "terraform apply":
+```
+Apply complete! Resources: 60 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+eks_cluster_arn = "arn:aws:eks:us-east-1:136091176431:cluster/eg-test-eks-cluster"
+eks_cluster_endpoint = "https://13538487A640FC955B00353A1F86A19A.gr7.us-east-1.eks.amazonaws.com"
+eks_cluster_id = "eg-test-eks-cluster"
+eks_cluster_identity_oidc_issuer = "https://oidc.eks.us-east-1.amazonaws.com/id/13538487A640FC955B00353A1F86A19A"
+eks_cluster_ipv6_service_cidr = ""
+eks_cluster_managed_security_group_id = "sg-0d044b1d368d90258"
+eks_cluster_version = "1.29"
+eks_node_group_arn = "arn:aws:eks:us-east-1:136091176431:nodegroup/eg-test-eks-cluster/eg-test-eks-workers/a0c9f814-faa0-fda0-d04c-f7323e885e92"
+eks_node_group_id = "eg-test-eks-cluster:eg-test-eks-workers"
+eks_node_group_resources = tolist([
+  tolist([
+    {
+      "autoscaling_groups" = tolist([
+        {
+          "name" = "eks-eg-test-eks-workers-a0c9f814-faa0-fda0-d04c-f7323e885e92"
+        },
+      ])
+      "remote_access_security_group_id" = ""
+    },
+  ]),
+])
+eks_node_group_role_arn = "arn:aws:iam::136091176431:role/eg-test-eks-workers"
+eks_node_group_role_name = "eg-test-eks-workers"
+eks_node_group_status = "ACTIVE"
+private_subnet_cidrs = tolist([
+  "172.16.0.0/20",
+  "172.16.16.0/20",
+])
+public_subnet_cidrs = tolist([
+  "172.16.96.0/20",
+  "172.16.112.0/20",
+])
+vpc_cidr = "172.16.0.0/16"
+```
+
+
+### Key Observations:
+
+1. **Nodes Ready**: Two worker nodes are created and are in the "Ready" state under the "Compute" tab.
+2. **Node Groups Active**: The "eg-test-eks-workers" node group is functioning properly with a desired count of 2 nodes.
+3. **Cluster Add-ons**: Necessary Kubernetes system components are running successfully, as shown under "Resources → Workloads".
+
+### Next Steps:
+
+1. **Validate Access**:
+    
+    - Confirm that `kubectl get nodes` shows these nodes when run from an environment that has cluster access via the kubeconfig file.
+    - Use `aws eks update-kubeconfig` if needed to set up or update the kubeconfig.
+2. **Deploy Applications**:
+    
+    - Start deploying workloads to the cluster using `kubectl apply -f <manifest.yaml>` or Helm charts.
+    - Test cluster with a basic workload like an Nginx deployment.
+3. **Secure the Cluster**:
+    
+    - If the cluster is still publicly accessible for troubleshooting, consider making it private once we're confident it's functioning well.
+    - Use security groups to control access to the API server.
+4. **Monitor and Optimize**:
+    
+    - Set up monitoring and logging via AWS CloudWatch and EKS logs.
+    - Optimize node utilization by adjusting the scaling policies for the node group.
+
+
+
+
+
+#**Getting "kubectl" up and running**
+
+-- Current nodegroup name (Just an example. No longer active):  default-node-group-20241219192526478100000001 
+
+-- To get basic info about the cluster:
+aws eks describe-cluster --name vpc1-eks-cluster --region us-east-1 --query "cluster.resourcesVpcConfig" --output json
+
+
+-- Verify the EKS Cluster Endpoint
+aws eks describe-cluster --name vpc1-eks-cluster --region us-east-1 --query "cluster.endpoint" --output text
+
+-- Currently (Just an example. No longer active), https://67CF04BF9C1E1AC6120804F0E7444836.gr7.us-east-1.eks.amazonaws.com
+
+
+
+
+
+
+
+
+
+-- Create a file "aws-auth-configmap.yaml" with the following contents:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapUsers: |
+    - userarn: arn:aws:iam::136091176431:user/abgenerette
+      username: abgenerette
+      groups:
+        - system:masters
+    - userarn: arn:aws:iam::136091176431:user/tdubois
+      username: tdubois
+      groups:
+        - system:masters
+    - userarn: arn:aws:iam::136091176431:user/rngwanah
+      username: rngwanah
+      groups:
+        - system:masters
+
+-- cp ~/.kube/config ~/.kube/config.<something>, then regenerate ~/.kube/config:
+aws eks update-kubeconfig --name eg-test-eks-cluster --region us-east-1 --kubeconfig ~/.kube/config.regenerated  -- Then, mv ~/.kube/config.regenerated ~/.kube/config
+
+
+-- vim ~/.kube/config, search on "clusters:" and for the one that has "server:" set to the EKS Cluster endpoint, set "name:" to vpc1-eks-cluster
+
+
+
+
+-- Generate temporary EKS token:
+aws eks get-token --cluster-name eg-test-eks-cluster --region us-east-1
+
+
+-- Currently (Just an example. No longer active):  k8s-aws-v1.aHR0cHM6Ly9zdHMudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20vP0FjdGlvbj1HZXRDYWxsZXJJZGVudGl0eSZWZXJzaW9uPTIwMTEtMDYtMTUmWC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBUjdMNUtSWFhVVFNGQ1FNQSUyRjIwMjQxMjIxJTJGdXMtZWFzdC0xJTJGc3RzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNDEyMjFUMDMwOTAyWiZYLUFtei1FeHBpcmVzPTYwJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCUzQngtazhzLWF3cy1pZCZYLUFtei1TaWduYXR1cmU9ZTc0ODYzZTliMThmOTIzNDcxY2RlM2JjYWE3YzExNTdhODYyZjU5YTA5ZmU0ZWE4ZjNjOTUyYWFhMmY2NjJmMw
+
+
+-- *** to refresh token (they may expire as soon as 15 minutes after being generated):
+
+aws eks update-kubeconfig --name eg-test-eks-cluster --region us-east-1
+
+
+
+-- vim ~/.kube/config, search on "users:" and place this right under that line:
+- name: vpc1-eks-cluster-via-token
+  user:
+    token: <insert-token-here>
+
+-- vim ~/.kube/config, search on "contexts:" and place this right under that line:
+- context:
+    cluster: vpc1-eks-cluster
+    user: vpc1-eks-cluster-via-token
+  name: vpc1-eks-cluster-context
+
+-- vim ~/.kube/config, under "clusters:", for the block that has "server:" set to current "EKS Cluster Endpoint", set "name:" to vpc1-eks-cluster
+
+
+-- run:
+
+kubectl config use-context vpc1-eks-cluster-context
+
+-- Try applying the ConfigMap
+
+kubectl apply -f aws-auth-configmap.yaml
+
+-- With that new ConfigMap in place (and assuming that you're AWS user is listed in the file), 
+update your ~/.kube/config with your AWS user info:
+
+aws eks update-kubeconfig --name <cluster_name> --region <region> --profile <aws_profile>
+
+aws eks update-kubeconfig --name eg-test-eks-cluster --region us-east-1 --profile etaxsys_136091176431 # For abgenerette
+
+
+
+
+
+### Creating Secrets, Manifests
+
+These manifests include Namespaces, Deployments, Horizontal Pod Autoscalers (HPA), and secure handling of DockerHub credentials using Kubernetes Secrets.
+
+1. Prerequisites
+Install kubectl.
+Ensure kubectl is connected to your cluster.
+Enable the Kubernetes Metrics Server (required for autoscaling).
+2. Create Namespaces that we'll be using (see also namespaces.yaml):
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twiz-brie
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vertex-edge
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twedds
+
+2. Securely Handling DockerHub Credentials
+To securely handle DockerHub credentials, create a Kubernetes Secret that stores the credentials.
+
+Run the following command to create a Docker registry secret for authentication:
+
+bash
+Copy code
+kubectl create secret docker-registry dockerhub-secret \
+  --docker-username=<your-username> \
+  --docker-password=<your-password> \
+  --docker-email=<your-email> \
+  --namespace=<namespace>
+Replace <your-username>, <your-password>, and <your-email> with your DockerHub credentials. Repeat this for each namespace.
+
+3. Kubernetes Manifests
+see twiz-brie.yaml, vertex-edge.yaml, and twedds.yaml
+
+Summary
+Namespaces: Separate namespaces for TW/BRIE, Vertex Edge, and TWEDDS isolate resources.
+Deployments: Defined with DockerHub images and replicas.
+Autoscaling: Uses Horizontal Pod Autoscalers to scale pods based on CPU and memory utilization.
+DockerHub Secret: A Kubernetes Secret is used for image pulls, ensuring credentials are securely stored.
+You can apply these manifests using:
+
+bash
+Copy code
+kubectl apply -f <manifest-file>.yaml
+
+
+
+###Switching Publicly accessible Cluster to Private one
+
+To switch an Amazon EKS cluster from being publicly accessible to private-only using the CloudPosse EKS module, 
+one needs to modify the endpoint_public_access, endpoint_private_access, and potentially the public_access_cidrs parameters 
+in their Terraform configuration:
+
+Steps to Modify the Cluster Endpoint Access
+Update the Terraform Configuration: Open Terraform configuration file where the CloudPosse EKS module is defined (e.g., main.tf) and adjust the following parameters:
+
+hcl
+Copy code
+module "eks_cluster" {
+  source  = "cloudposse/eks/aws"
+  version = "<module version>"
+
+  # Existing configurations...
+
+  # Disable public access
+  endpoint_public_access = false
+
+  # Enable private access
+  endpoint_private_access = true
+
+  # Remove public CIDR blocks (optional)
+  public_access_cidrs = []
+}
+Set endpoint_public_access to false to disable public access.
+Set endpoint_private_access to true to enable private access.
+Ensure public_access_cidrs is either set to [] or omitted if we don’t want any public CIDR blocks to have access.
+Plan the Changes: Run a terraform plan to see what changes will be applied to the EKS cluster.
+
+bash
+Copy code
+terraform plan
