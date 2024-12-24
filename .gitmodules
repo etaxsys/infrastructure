@@ -1,0 +1,3 @@
+[submodule "ticket-4509/modules/terraform-aws-eks-cluster"]
+	path = ticket-4509/modules/terraform-aws-eks-cluster
+	url = https://github.com/cloudposse/terraform-aws-eks-cluster.git
