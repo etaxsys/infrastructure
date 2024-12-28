@@ -103,6 +103,13 @@ module "eks_cluster" {
   oidc_provider_enabled        = var.oidc_provider_enabled
   enabled_cluster_log_types    = var.enabled_cluster_log_types
   cluster_log_retention_period = var.cluster_log_retention_period
+  namespace = "vpc1"
+  name      = "eks"
+  stage     = "dev" # Or dev/test/staging based on your environment
+
+  # these two need to be set or not set, together:
+  endpoint_public_access = true
+  public_access_cidrs = ["34.232.194.42/32"]
 
   cluster_encryption_config_enabled                         = var.cluster_encryption_config_enabled
   cluster_encryption_config_kms_key_id                      = var.cluster_encryption_config_kms_key_id

@@ -1,22 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tw-brie-deployment
-  namespace: tw-brie
+  name: twiz-brie
+  namespace: default
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: tw-brie
+      app: twiz-brie
   template:
     metadata:
       labels:
-        app: tw-brie
+        app: twiz-brie
     spec:
       containers:
-      - name: tw-brie-container
-        image: eessah/mtp-dev:3167
+      - name: twiz-brie-container
+        image: myregistry/twiz-brie:latest
         imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: VERTEX_EDGE_URL
+          value: http://vertex-edge-service.vertex-edge:8080
+        - name: TWEEDS_URL
+          value: http://tweeds-service.default:8080
         resources:
           requests:
             cpu: "500m"
@@ -25,30 +32,18 @@ spec:
             cpu: "1"
             memory: "1Gi"
       imagePullSecrets:
-      - name: tw-brie-dockerhub-secret
+      - name: my-dockerhub-secret
 ---
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+apiVersion: v1
+kind: Service
 metadata:
-  name: tw-brie-hpa
-  namespace: tw-brie
+  name: twiz-brie-service
+  namespace: default
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: tw-brie-deployment
-  minReplicas: 3
-  maxReplicas: 20
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 90
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 90
+  selector:
+    app: twiz-brie
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: LoadBalancer

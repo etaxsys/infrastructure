@@ -3,9 +3,9 @@ region = "us-east-1"
 
 availability_zones = ["us-east-1a", "us-east-1b"]
 
-namespace = "eg"
+namespace = "vpc1"
 
-stage = "test"
+stage = "dev"
 
 name = "eks"
 

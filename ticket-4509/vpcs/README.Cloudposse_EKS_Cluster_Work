@@ -227,6 +227,11 @@ kubectl apply -f <manifest-file>.yaml
 
 ###Switching Publicly accessible Cluster to Private one
 
+Default behavior of the Cloudposse module is to make the cluster publicly accessible, but you can set the variable,
+where you reference the module (main.tf, in our case), such that only a select set of CIDRs have access:
+
+  public_access_cidrs = ["34.232.194.42/32"]
+
 To switch an Amazon EKS cluster from being publicly accessible to private-only using the CloudPosse EKS module, 
 one needs to modify the endpoint_public_access, endpoint_private_access, and potentially the public_access_cidrs parameters 
 in their Terraform configuration:

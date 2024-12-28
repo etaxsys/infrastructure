@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vertex-edge-deployment
+  namespace: vertex-edge
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vertex-edge
+  template:
+    metadata:
+      labels:
+        app: vertex-edge
+    spec:
+      containers:
+      - name: vertex-edge-container
+        image: tmomtpedge/edgetestlocal:ETSITesting-11790
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      imagePullSecrets:
+      - name: vertex-edge-dockerhub-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vertex-edge-service
+  namespace: vertex-edge
+spec:
+  selector:
+    app: vertex-edge
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vertex-edge-hpa
+  namespace: vertex-edge
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vertex-edge-deployment
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
