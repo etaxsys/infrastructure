@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twiz-brie
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vertex-edge
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twedds
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: admin

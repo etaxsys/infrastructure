@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twiz-brie-deployment
+  namespace: twiz-brie
+  labels:
+    app: twiz-brie
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: twiz-brie
+  template:
+    metadata:
+      labels:
+        app: twiz-brie
+    spec:
+      containers:
+      - name: twiz-brie
+        image: eessah/mtp-dev:3167
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+      imagePullSecrets:
+      - name: tw-brie-dockerhub-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: twiz-brie-service
+  namespace: twiz-brie
+  labels:
+    app: twiz-brie
+spec:
+  selector:
+    app: twiz-brie
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    name: http
+  - protocol: TCP
+    port: 443
+    targetPort: 443
+    name: https
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: twiz-brie-restrict
+  namespace: twiz-brie
+spec:
+  podSelector:
+    matchLabels:
+      app: twiz-brie
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: vertex-edge
+    - namespaceSelector:
+        matchLabels:
+          name: twedds
+    - namespaceSelector:
+        matchLabels:
+          name: admin
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: twiz-brie-hpa
+  namespace: twiz-brie
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: twiz-brie-deployment
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

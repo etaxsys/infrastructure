@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twedds-deployment
+  namespace: twedds
+  labels:
+    app: twedds
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: twedds
+  template:
+    metadata:
+      labels:
+        app: twedds
+    spec:
+      containers:
+      - name: twedds
+        image: tmomtpedge/tweddslw:TWEDDS2.2.5.61
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+      imagePullSecrets:
+      - name: twedds-dockerhub-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: twedds-service
+  namespace: twedds
+  labels:
+    app: twedds
+spec:
+  selector:
+    app: twedds
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    name: http
+  - protocol: TCP
+    port: 443
+    targetPort: 443
+    name: https
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: twedds-restrict
+  namespace: twedds
+spec:
+  podSelector:
+    matchLabels:
+      app: twedds
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: twiz-brie
+    - namespaceSelector:
+        matchLabels:
+          name: admin
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: twedds-hpa
+  namespace: twedds
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: twedds-deployment
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

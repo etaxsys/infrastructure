@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vertex-edge-deployment
+  namespace: vertex-edge
+  labels:
+    app: vertex-edge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vertex-edge
+  template:
+    metadata:
+      labels:
+        app: vertex-edge
+    spec:
+      containers:
+      - name: vertex-edge
+        image: tmomtpedge/edgetestlocal:ETSITesting-11790
+        imagePullPolicy: Always
+        ports:
+            - containerPort: 8585
+            - containerPort: 9001
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+      imagePullSecrets:
+      - name: vertex-edge-dockerhub-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vertex-edge-service
+  namespace: vertex-edge
+  labels:
+    app: vertex-edge
+spec:
+  selector:
+    app: vertex-edge
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8585
+    - name: internal
+      protocol: TCP
+      port: 9001
+      targetPort: 9001
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vertex-edge-restrict
+  namespace: vertex-edge
+spec:
+  podSelector:
+    matchLabels:
+      app: vertex-edge
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: admin-pod
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 9001
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: admin
+          podSelector:
+            matchLabels:
+              app: admin-pod
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: twiz-brie
+          podSelector:
+            matchLabels:
+              app: twiz-brie
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vertex-edge-hpa
+  namespace: vertex-edge
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vertex-edge-deployment
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

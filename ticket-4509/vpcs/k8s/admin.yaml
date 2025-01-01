@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: admin-test-pod
+  namespace: admin
+spec:
+  containers:
+  - name: admin-test-container
+    # image: busybox:latest
+    image: praqma/network-multitool
+    command: ["sh", "-c", "while true; do sleep 2; done"]
+    imagePullPolicy: Always
