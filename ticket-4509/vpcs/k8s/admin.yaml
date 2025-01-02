@@ -7,6 +7,8 @@ spec:
   containers:
   - name: admin-test-container
     # image: busybox:latest
-    image: praqma/network-multitool
-    command: ["sh", "-c", "while true; do sleep 2; done"]
+    image: praqma/network-multitool #Alpine Linux
+    command: ["sh", "-c", "apk update && apk add python3 py3-pip postgresql-client curl netcat-openbsd busybox-extras openssh vim bind-tools --no-cache && while true; do sleep 2; done"]
     imagePullPolicy: Always
+
+# NOTE: we'll probably just burn an image with the packages, going forward.
