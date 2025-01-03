@@ -139,7 +139,7 @@ variable "private_ipv6_enabled" {
 
 variable "allowed_ssh_cidrs" {
   type        = list(string)
-  description = "List of CIDRs allowed to SSH into EC2 instances"
+  description = "List of CIDRs allowed to run kubectl calls against the cluster and to SSH into EC2 instances"
   default     = ["34.232.194.42/32"] # abgenerette,...
 }
 
