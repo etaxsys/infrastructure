@@ -17,3 +17,7 @@ data:
       username: rngwanah
       groups:
         - system:masters
+    - userarn: arn:aws:iam::136091176431:user/eessah
+      username: eessah
+      groups:
+        - system:masters
