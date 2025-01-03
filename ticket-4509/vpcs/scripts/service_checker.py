@@ -5,7 +5,7 @@ from requests.exceptions import RequestException
 # Service details
 SERVICES = [
     {"name": "twiz-brie", "namespace": "twiz-brie", "service": "twiz-brie-service", "ports": [80, 443]},
-    {"name": "vertex-edge", "namespace": "vertex-edge", "service": "vertex-edge-service", "ports": [8585]},
+    {"name": "vertex-edge", "namespace": "vertex-edge", "service": "vertex-edge-service", "ports": [8585, 9001]},
     {"name": "twedds", "namespace": "twedds", "service": "twedds-service", "ports": [80, 443]},
 ]
 
