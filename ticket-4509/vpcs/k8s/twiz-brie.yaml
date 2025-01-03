@@ -29,6 +29,9 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "500m"
+        env:
+        - name: TWEDDSMODE
+          value: L
       imagePullSecrets:
       - name: tw-brie-dockerhub-secret
 ---
